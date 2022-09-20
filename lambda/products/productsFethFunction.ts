@@ -8,16 +8,29 @@ export async function handler(
   event: APIGatewayProxyEvent,
   context: Context
 ): Promise<APIGatewayProxyResult> {
-  console.log("productsFetchHandler: ", event);
+  const lambdaRequestId = context.awsRequestId;
+  const apiRequestId = event.requestContext.requestId;
 
-  const products = await getProducts();
+  console.log("Lambda Request ID: ", lambdaRequestId);
+  console.log("API Request ID: ", apiRequestId);
 
+  const method = event.httpMethod;
+
+  if (event.resource === "/products") {
+    if (method === "GET") {
+      console.log("GET /products");
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          message: "Products fetched successfully",
+        }),
+      };
+    }
+  }
   return {
-    statusCode: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Credentials": true,
-    },
-    body: JSON.stringify(products),
+    statusCode: 400,
+    body: JSON.stringify({
+      message: "Bad request",
+    }),
   };
 }
