@@ -6,6 +6,7 @@ import { Construct } from "constructs";
 
 interface EcommerceApiStackProps extends cdk.StackProps {
   productsFethHandler: lambdaNodejs.NodejsFunction;
+  productsAdminHandler: lambdaNodejs.NodejsFunction;
 }
 
 export class ECommerceApiStack extends cdk.Stack {
@@ -32,11 +33,31 @@ export class ECommerceApiStack extends cdk.Stack {
       },
     });
 
+    // Products GET Integration
     const productsFetchIntegration = new apigateway.LambdaIntegration(
       props.productsFethHandler
     );
 
+    // "/products - GET"
     const productsResource = api.root.addResource("products");
     productsResource.addMethod("GET", productsFetchIntegration);
+
+    // "/products/{id} - GET"
+    const productsWithIdResource = productsResource.addResource("{id}");
+    productsWithIdResource.addMethod("GET", productsFetchIntegration);
+
+    // Products POST Integration
+    const productsAdminIntegration = new apigateway.LambdaIntegration(
+      props.productsAdminHandler
+    );
+
+    // "/products - POST"
+    productsResource.addMethod("POST", productsAdminIntegration);
+
+    // "/products/{id} - PUT"
+    productsWithIdResource.addMethod("PUT", productsAdminIntegration);
+
+    // "/products/{id} - DELETE"
+    productsWithIdResource.addMethod("DELETE", productsAdminIntegration);
   }
 }
