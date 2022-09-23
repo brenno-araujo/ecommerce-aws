@@ -14,28 +14,33 @@ export async function handler(
   console.log("Lambda Request ID: ", lambdaRequestId);
   console.log("API Request ID: ", apiRequestId);
 
-  const method = event.httpMethod;
-
   if (event.resource === "/products") {
-    if (method === "GET") {
-      console.log("GET /products");
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          message: "Products fetched successfully",
-        }),
-      };
-    }
+    console.log("POST /products");
+    return {
+      statusCode: 201,
+      body: JSON.stringify({
+        message: "Product created successfully",
+      }),
+    };
   }
 
   if (event.resource === "/products/{id}") {
-    if (method === "GET") {
-      const productId = event.pathParameters?.id as string;
-      console.log("GET /products/{id}", productId);
+    const productId = event.pathParameters?.id as string;
+    if (event.httpMethod === "PUT") {
+      console.log("PUT /products/{id}", productId);
       return {
         statusCode: 200,
         body: JSON.stringify({
-          message: "Product fetched successfully",
+          message: "Product updated successfully",
+        }),
+      };
+    }
+    if (event.httpMethod === "DELETE") {
+      console.log("DELETE /products/{id}", productId);
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          message: "Product deleted successfully",
         }),
       };
     }
