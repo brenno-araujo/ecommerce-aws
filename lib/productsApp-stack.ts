@@ -1,29 +1,41 @@
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as lambdaNodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as cdk from "aws-cdk-lib";
-import * as dynadb from "aws-cdk-lib/aws-dynamodb";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as ssm from "aws-cdk-lib/aws-ssm";
 
 import { Construct } from "constructs";
 
 export class ProductsAppStack extends cdk.Stack {
   readonly productsFethHandler: lambdaNodejs.NodejsFunction;
   readonly productsAdminHandler: lambdaNodejs.NodejsFunction;
-  readonly productsDdb: dynadb.Table;
+  readonly productsDdb: dynamodb.Table;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    this.productsDdb = new dynadb.Table(this, "ProductsDdb", {
+    this.productsDdb = new dynamodb.Table(this, "ProductsDdb", {
       tableName: "Products",
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       partitionKey: {
         name: "id",
-        type: dynadb.AttributeType.STRING,
+        type: dynamodb.AttributeType.STRING,
       },
-      billingMode: dynadb.BillingMode.PAY_PER_REQUEST,
+      billingMode: dynamodb.BillingMode.PROVISIONED,
       readCapacity: 1,
       writeCapacity: 1,
     });
+
+    //Products Layer
+    const productsLayerArn = ssm.StringParameter.valueForStringParameter(
+      this,
+      "ProductsLayerArn"
+    );
+    const productsLayer = lambda.LayerVersion.fromLayerVersionArn(
+      this,
+      "ProductsLayer",
+      productsLayerArn
+    );
 
     this.productsFethHandler = new lambdaNodejs.NodejsFunction(
       this,
@@ -41,6 +53,7 @@ export class ProductsAppStack extends cdk.Stack {
         environment: {
           PRODUCTS_DDB: this.productsDdb.tableName,
         },
+        layers: [productsLayer],
       }
     );
     this.productsDdb.grantReadData(this.productsFethHandler);
@@ -61,6 +74,7 @@ export class ProductsAppStack extends cdk.Stack {
         environment: {
           PRODUCTS_DDB: this.productsDdb.tableName,
         },
+        layers: [productsLayer],
       }
     );
     this.productsDdb.grantReadWriteData(this.productsAdminHandler);
