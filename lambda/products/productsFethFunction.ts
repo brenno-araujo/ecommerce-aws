@@ -8,6 +8,7 @@ import { DynamoDB } from "aws-sdk";
 
 const productsDdb = process.env.PRODUCTS_DDB!;
 const ddbClient = new DynamoDB.DocumentClient();
+
 const productRepository = new ProductRepository(ddbClient, productsDdb);
 
 export async function handler(

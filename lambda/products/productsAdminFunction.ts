@@ -3,6 +3,13 @@ import {
   APIGatewayProxyResult,
   Context,
 } from "aws-lambda";
+import { Product, ProductRepository } from "/opt/nodejs/productsLayer";
+import { DynamoDB } from "aws-sdk";
+
+const productsDdb = process.env.PRODUCTS_DDB!;
+const ddbClient = new DynamoDB.DocumentClient();
+
+const productRepository = new ProductRepository(ddbClient, productsDdb);
 
 export async function handler(
   event: APIGatewayProxyEvent,
@@ -16,11 +23,11 @@ export async function handler(
 
   if (event.resource === "/products") {
     console.log("POST /products");
+    const product = JSON.parse(event.body!) as Product;
+    const newProduct = await productRepository.createProduct(product);
     return {
       statusCode: 201,
-      body: JSON.stringify({
-        message: "Product created successfully",
-      }),
+      body: JSON.stringify(newProduct),
     };
   }
 
@@ -28,15 +35,39 @@ export async function handler(
     const productId = event.pathParameters?.id as string;
     if (event.httpMethod === "PUT") {
       console.log("PUT /products/{id}", productId);
+      const product = JSON.parse(event.body!) as Product;
+      try {
+      const updatedProduct = await productRepository.updateProduct(
+        productId,
+        product
+      );
       return {
         statusCode: 200,
-        body: JSON.stringify({
-          message: "Product updated successfully",
-        }),
-      };
+        body: JSON.stringify(updatedProduct),
+      }; 
+      } catch (ConditionalCheckFailedException) {
+        return {
+          statusCode: 404,
+          body: 'Product not found',
+        };
+      }
     }
     if (event.httpMethod === "DELETE") {
       console.log("DELETE /products/{id}", productId);
+      try {
+        const deletedProduct = await productRepository.deleteProduct(productId);
+        return {
+          statusCode: 200,
+          body: JSON.stringify(deletedProduct),
+        };
+      } catch (error) {
+        return {
+          statusCode: 404,
+          body: (error as Error).message,
+        }; 
+      }
+    }
+
       return {
         statusCode: 200,
         body: JSON.stringify({
@@ -44,7 +75,6 @@ export async function handler(
         }),
       };
     }
-  }
 
   return {
     statusCode: 400,
