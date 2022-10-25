@@ -55,6 +55,7 @@ export class ProductsAppStack extends cdk.Stack {
         },
         layers: [productsLayer],
         tracing: lambda.Tracing.ACTIVE, 
+        insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_98_0,
       }
     );
     this.productsDdb.grantReadData(this.productsFethHandler);
@@ -77,6 +78,7 @@ export class ProductsAppStack extends cdk.Stack {
         },
         layers: [productsLayer],
         tracing: lambda.Tracing.ACTIVE,
+        insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_98_0,
       }
     );
     this.productsDdb.grantReadWriteData(this.productsAdminHandler);
