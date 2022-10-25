@@ -54,6 +54,7 @@ export class ProductsAppStack extends cdk.Stack {
           PRODUCTS_DDB: this.productsDdb.tableName,
         },
         layers: [productsLayer],
+        tracing: lambda.Tracing.ACTIVE, 
       }
     );
     this.productsDdb.grantReadData(this.productsFethHandler);
@@ -75,6 +76,7 @@ export class ProductsAppStack extends cdk.Stack {
           PRODUCTS_DDB: this.productsDdb.tableName,
         },
         layers: [productsLayer],
+        tracing: lambda.Tracing.ACTIVE,
       }
     );
     this.productsDdb.grantReadWriteData(this.productsAdminHandler);
